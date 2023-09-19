@@ -1,0 +1,4 @@
+# Set default administrator credentials fo keycloak Admin Portal
+auth:
+  adminUser: "admin"
+  adminPassword: "password"

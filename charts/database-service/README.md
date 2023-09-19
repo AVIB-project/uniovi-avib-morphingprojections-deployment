@@ -1,7 +1,6 @@
-# Minikube
+# Description
 
-This example deploy a 3 nodes Elasticsearch 8.5.1 cluster on [Minikube][]
-using [custom values][].
+This example deploy a 3 nodes Elasticsearch 8.5.1 cluster on [Minikube][] using [custom values][].
 
 If helm or kubectl timeouts occur, you may consider creating a minikube VM with
 more CPU cores or memory allocated.
@@ -33,6 +32,5 @@ minikube addons enable storage-provisioner
   curl localhost:9200/_cat/indices
   ```
 
-
+## Links
 [custom values]: https://github.com/elastic/helm-charts/tree/main/elasticsearch/examples/minikube/values.yaml
-[minikube]: https://minikube.sigs.k8s.io/docs/

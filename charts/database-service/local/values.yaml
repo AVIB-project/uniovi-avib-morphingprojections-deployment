@@ -5,11 +5,14 @@ antiAffinity: "soft"
 # Shrink default JVM heap.
 esJavaOpts: "-Xmx128m -Xms128m"
 
+# Define cluster name
 nameOverride: avib-elastic
 fullnameOverride: avib-elastic
 
+# Set elastic cluster nodes
 replicas: 1
 
+# Define default elastic credentials
 extraEnvs:
   - name: ELASTIC_PASSWORD
     value: password

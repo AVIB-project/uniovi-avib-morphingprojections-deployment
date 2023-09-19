@@ -1,0 +1,6 @@
+database-service:
+  enabled: true
+pipeline-engine-service:
+  enabled: true
+iam-service:
+  enabled: true
