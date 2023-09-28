@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: default
+  name: elastic-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+spec:
+  tls:
+  - hosts:
+      - avispe.edv.ingress.uniovi.es
+    secretName: avib-elastic-certs
+  rules:
+  - http:
+      paths:
+      - path: /elastic
+        pathType: Prefix
+        backend:
+          service:
+            name: avib-elastic
+            port:
+               number: 9200
