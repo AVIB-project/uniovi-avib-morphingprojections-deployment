@@ -2,7 +2,7 @@
 
 This repository represent the code to deploy the AVIB Architecture Infraestructure Services
 
-# Apache Reverse Prxy Configuration
+# Apache Reverse Proxy Configuration
 
 These are the entrances inside the file **/etc/apache2/sites-available/default-ssl.conf** in
 
