@@ -113,3 +113,11 @@ Helm version mentioned in [helm-tester Dockerfile][] (currently 3.10.2).
 [metricbeat-6]: https://github.com/elastic/helm-charts/tree/6.8/metricbeat/README.md
 [metricbeat-7]: https://github.com/elastic/helm-charts/tree/7.17/metricbeat/README.md
 [metricbeat-8]: https://github.com/elastic/helm-charts/tree/main/metricbeat/README.md
+
+# Notes
+
+To install elasticsearch in the cluster AVISPE go to /elasticsearch/examples/minikube and execute
+
+```
+make install
+```
