@@ -1,17 +1,49 @@
-# Description
+## Description
 
-We will install the mongodb helm chart with these new values
+We will deploy the mongodb database service using a helm chart packaed published in the repo of bitmani. We must to have the bitmani repo installed in our local helm repositories previous to any deployment:
 
+## Installation
+
+Add bitnami repo to our local helm installation:
+
+```
+$ helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+
+Check that this repo was added correctly:
+```
+$ helm repo list
+```
+
+We can recover the default **values.yml** file from bitnami mongodb chart package like this:
+
+```
+$ helm show values bitnami/mongodb > values.yaml
+```
+
+Change some default values in this **values.yml** file created like this:
+
+```
 rootPassword: password
 usernames: ["admin"]
 passwords: ["password"]
 databases: ["configuration"]
+```
 
-REGISTRY_NAME=registry-1.docker.io and REPOSITORY_NAME=bitnamicharts
+After change the **values.yaml** execute this command to deploy our mongodb release in kubernetes with name **avib-mongodb**:
 
-helm install avib-mongodb -f values.yaml oci://REGISTRY_NAME/REPOSITORY_NAME/mongodb
+```
+$ helm install avib-mongodb -f values.yaml oci://REGISTRY_NAME/REPOSITORY_NAME/mongodb
 
-# Installation
+where:
+
+REGISTRY_NAME=registry-1.docker.io 
+REPOSITORY_NAME=bitnamicharts
+```
+
+The deployment chart command finally will be like this:
+
+```
 $ helm install avib-mongodb -f values.yaml oci://registry-1.docker.io/bitnamicharts/mongodb
 
 Pulled: registry-1.docker.io/bitnamicharts/mongodb:14.4.2
@@ -52,3 +84,83 @@ To connect to your database from outside the cluster execute the following comma
 
     kubectl port-forward --namespace default svc/avib-mongodb 27017:27017 &
     mongosh --host 127.0.0.1 --authenticationDatabase admin -p $MONGODB_ROOT_PASSWORD
+```
+## Connect to mongodb using kubectl portforward
+
+We can connect to mongodb creating a external temporal proxy portforward using kubectl command like this:
+
+```
+$ kubectl port-forward svc/avib-mongodb 27017:27017
+```
+
+Test this new proxy using the URI string in MongoDB Compass tool
+
+```
+mongodb://root:password@localhost
+```
+
+## Connect to mongodb using kubernetes ingress
+
+By default the only TCP connections are under HTTP ports:80 and 443, so we must apply some pataches to the ingress controller to open new TCP port for mongoDB throw ingress, so we must apply some patches to our ingress controller.
+
+Patch the **tcp-service config-map** located in the namespace **ingress-nginx** of the nginx ingress controller to create a port related to mongodb service executing this command:
+
+```
+$ kubectl patch configmap tcp-services -n ingress-nginx --patch '{"data":{"27017":"default/avib-mongodb:27017"}}'
+```
+
+
+After apply the patch we can execute this comnmand:
+```
+$ kubectl get configmap tcp-services -n ingress-nginx -o yaml
+```
+
+And see something like this, wher a new data attribute was added to our tcp-service config-map:
+
+```
+apiVersion: v1
+data:
+  "27017": default/avib-mongodb:27017
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"ConfigMap","metadata":{"annotations":{},"labels":{"addonmanager.kubernetes.io/mode":"EnsureExists","app.kubernetes.io/component":"controller","app.kubernetes.io/instance":"ingress-nginx","app.kubernetes.io/name":"ingress-nginx"},"name":"tcp-services","namespace":"ingress-nginx"}}
+  creationTimestamp: "2023-09-14T07:31:41Z"
+  labels:
+    addonmanager.kubernetes.io/mode: EnsureExists
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+  name: tcp-services
+  namespace: ingress-nginx
+  resourceVersion: "5629339"
+  uid: 7d70734d-6cb1-43c8-853c-a82fb9f59bf8
+```
+
+Patch the **nginx ingress controller** to open a TCP port for the previous port created in the config map tcp-service, applying the patch file ingress-nginx-controller-patch.yaml:
+
+```
+$ kubectl patch deployment ingress-nginx-controller --patch "$(cat ingress-nginx-controller-patch.yaml)" -n ingress-nginx
+```
+
+# Test the ingress connection
+We can connect to our mongodb database throw ingress using MongoDB Compass tool and this uri connection string:
+
+```
+mongodb://root:passwprd@minikube.io
+```
+
+Or simple exexute a telnet to the mongosb default port configured:
+
+![mongo-db-connection](captures/mongo-db-connection.png)
+
+```
+$ telnet $(minikube ip) 27017
+```
+
+## Links
+
+- [Ingress nginx for TCP and UDP services in Minikube](https://minikube.sigs.k8s.io/docs/tutorials/nginx_tcp_udp_ingress/)
+
+- [Exposing TCP and UDP services in nginx ingress controller](https://kubernetes.github.io/ingress-nginx/user-guide/exposing-tcp-udp-services/)
