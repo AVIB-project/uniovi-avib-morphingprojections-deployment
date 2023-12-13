@@ -1,0 +1,17 @@
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: ingress-morphingprojections-frontend
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - host: minikube.io
+      http:
+        paths:
+          - path: /morphingprojections-frontend(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              serviceName: uniovi-avib-morphingprojections-frontend
+              servicePort: 80
