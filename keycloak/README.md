@@ -1,17 +1,19 @@
 # Description
 
-Deployment of Keycloak inside kubernetes cluster behinde a ingress proxy
+Deployment of Keycloak inside kubernetes cluster
 
 # Deployment Steps
 
-
 **STEP01**: deploy keycloak using our custom values
 
+Add bitnami helm chart repository:
+
 ```
-helm install avib-keycloak --values values.yaml oci://registry-1.docker.io/bitnamicharts/keycloak
+$ helm repo add bitnami https://charts.bitnami.com/bitnami
 ```
 
-**STEP02**: deploy keycloak ingress entrance
+Deploy the last keycloak helm chart inside kubernetes cluster using custom values:
+
 ```
-kubectl apply -f keycloak-ingress.yaml
+$ helm install avib-keycloak --values values.yaml oci://registry-1.docker.io/bitnamicharts/keycloak
 ```

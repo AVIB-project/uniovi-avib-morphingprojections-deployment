@@ -2,10 +2,4 @@ auth:
   adminUser: admin
   adminPassword: password
 
-proxyAddressForwarding: true
-
-extraEnvVars:
-  - name: KC_HOSTNAME_ADMIN_URL
-    value: "https://avispe.edv.uniovi.es/iam"
-  - name: KC_HOSTNAME_URL
-    value: "https://avispe.edv.uniovi.es/iam"
+proxyHeaders: forwarded

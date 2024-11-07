@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: avib-keycloak-ingress
+spec:
+  rules:
+  - host: avispe.edv.uniovi.es
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: gsdpi-keycloak
+              port:
+                name: http
