@@ -25,7 +25,15 @@ We can resume the principal topics configured in HAProxy. The proxy have this co
 # Deployment steps
  Execute this command
 ```
-docker run -d --name k8s-proxy -u root -p 80:80 -p 443:443 --volume ${PWD}/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg --volume ${PWD}/certs/avispe.edv.uniovi.es.pem:/etc/ssl/certs/ssl.pem --network host --restart always haproxy:3.0-alpine
+docker run -d \
+--name server-proxy \
+-u root \
+-p 80:80 -p 443:443 \
+--volume /etc/letsencrypt/live/avispe.edv.uniovi.es/fullchain.pem:/etc/ssl/certs/avib/server.crt \
+--volume /etc/letsencrypt/live/avispe.edv.uniovi.es/privkey.pem:/etc/ssl/certs/avib/server.crt.key \
+--volume ${PWD}/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg \
+--network host \
+haproxy:3.0-alpine
 ```
 
 Some points to be explained:
