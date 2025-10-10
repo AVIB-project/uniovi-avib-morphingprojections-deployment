@@ -1,0 +1,189 @@
+services:
+  mongodb:
+    image: mongo:7.0.14
+    container_name: avib-mongodb
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=configuration
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - avib_data:/data/db
+    networks:
+      - avib-net
+
+  postgres:
+    image: postgres:15
+    container_name: avib-keycloak-db
+    restart: always
+    environment:
+      - POSTGRES_DB: keycloak
+      - POSTGRES_USER: avib
+      - POSTGRES_PASSWORD: password
+    volumes:
+      - avib_keycloak_db:/var/lib/postgresql/data
+    networks:
+      - avib-net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: avib-keycloak
+    restart: always
+    command: start
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD: password
+      - KC_HTTP_ENABLED: true
+      - KC_PROXY_HEADERS: forwarded
+      - KC_HTTP_RELATIVE_PATH: /iam
+      - KC_HOSTNAME: 156.35.152.167
+      - KC_HOSTNAME_PATH: /iam
+      - KC_DB: postgres
+      - KC_DB_URL_HOST: avib-keycloak-db
+      - KC_DB_URL_PORT: 5432
+      - KC_DB_USERNAME: avib
+      - KC_DB_PASSWORD: password
+    networks:
+      - avib-net
+    depends_on:
+      - postgres
+
+  minio:
+    image: minio/minio:RELEASE.2025-08-01T21-20-57Z
+    container_name: minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API access
+      - "9001:9001"   # Web console
+    volumes:
+      - minio_data:/data
+    networks:
+      - avib-net
+      
+  proxy:
+    image: haproxy:latest
+    container_name: avib-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${PWD}/haproxy-vm/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ${PWD}/haproxy-vm/haproxy-certs:/usr/local/etc/haproxy/certs:ro
+    networks:
+      - avib-net
+
+  backend-security:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-security
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-security:1.0.0
+    container_name: avib-backend-security
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-organization:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-organization
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-organization:1.0.0
+    container_name: avib-backend-organization
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-annotation:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-annotation
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-annotation:1.0.0
+    container_name: avib-backend-participant
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-storage:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-storage
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-storage:1.0.0
+    container_name: avib-backend-storage
+    restart: always
+    networks:
+      - avib-net
+
+  backend-job:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-job-docker
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-job-docker:1.0.0
+    container_name: avib-backend-job-docker
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - avib-net
+
+  backend-analytics:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-analytics
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-analytics:1.0.0
+    container_name: avib-backend-analytics
+    restart: always
+    networks:
+      - avib-net
+
+  frontend-ui:
+    build:
+      context: ../uniovi-avib-morphingprojections-portal
+      args:
+        ARG_ANGULAR_PROFILES_ACTIVE: ${ARG_ANGULAR_PROFILES_ACTIVE}
+    image: uniovi-avib-morphingprojections-portal:1.0.0
+    container_name: avib-portal
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - keycloak
+
+  gateway:
+    build:
+      context: ../uniovi-avib-morphingprojections-gateway
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-gateway:1.0.0
+    container_name: avib-gateway
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - backend-security
+      - backend-organization
+
+volumes:
+  avib_keycloak_db:
+  avib_data:
+
+networks:
+  avib-net:
+    name: avib-net
+    driver: bridge

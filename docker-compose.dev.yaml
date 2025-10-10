@@ -1,0 +1,88 @@
+services:
+  mongodb:
+    image: mongo:7.0.14
+    container_name: avib-mongodb
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=configuration
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - avib_data:/data/db
+    networks:
+      - avib-net
+
+  postgres:
+    image: postgres:15
+    container_name: avib-keycloak-db
+    restart: always
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: avib
+      POSTGRES_PASSWORD: password
+    volumes:
+      - avib_keycloak_db:/var/lib/postgresql/data
+    networks:
+      - avib-net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: avib-keycloak
+    restart: always
+    command: start
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: password
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: forwarded
+      KC_HTTP_RELATIVE_PATH: /iam
+      KC_HOSTNAME: 156.35.152.167
+      KC_HOSTNAME_PATH: /iam
+      KC_DB: postgres
+      KC_DB_URL_HOST: avib-keycloak-db
+      KC_DB_URL_PORT: 5432
+      KC_DB_USERNAME: avib
+      KC_DB_PASSWORD: password
+    networks:
+      - avib-net
+    depends_on:
+      - postgres
+
+  minio:
+    image: minio/minio:RELEASE.2025-08-01T21-20-57Z
+    container_name: minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API access
+      - "9001:9001"   # Web console
+    volumes:
+      - minio_data:/data
+    networks:
+      - avib-net
+      
+  proxy:
+    image: haproxy:latest
+    container_name: avib-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${PWD}/haproxy-vm/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ${PWD}/haproxy-vm/haproxy-certs:/usr/local/etc/haproxy/certs:ro
+    networks:
+      - avib-net
+
+volumes:
+  avib_keycloak_db:
+  avib_data:
+
+networks:
+  avib-net:
+    name: avib-net
+    driver: bridge
