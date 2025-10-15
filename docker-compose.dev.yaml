@@ -89,6 +89,82 @@ services:
     networks:
       - avib-net
 
+  backend-organization:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-organization
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-organization:1.0.0
+    container_name: avib-backend-organization
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-annotation:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-annotation
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-annotation:1.0.0
+    container_name: avib-backend-annotation
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-storage:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-storage
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-storage:1.0.0
+    container_name: avib-backend-storage
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-job:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-job-docker
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-job-docker:1.0.0
+    container_name: avib-backend-job-docker
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-security:
+    build:
+      context: ../uniovi-avib-morphingprojections-backend-security
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-security:1.0.0
+    container_name: avib-backend-security
+    restart: always
+    networks:
+      - avib-net
+    depends_on:
+      - mongodb
+
+  backend-gateway:
+    build:
+      context: ../uniovi-avib-morphingprojections-gateway
+      args:
+        ARG_SPRING_PROFILES_ACTIVE: avib
+    image: uniovi-avib-morphingprojections-backend-gateway:1.0.0
+    container_name: avib-backend-gateway
+    restart: always
+    networks:
+      - avib-net
+
 volumes:
   avib_keycloak_db:
   avib_mongodb_data:
